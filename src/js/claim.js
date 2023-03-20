@@ -23,19 +23,19 @@ async function updateState(connected) {
     document.querySelector("#claimButton").style.display = connected ? "" : "none";
 }
 
-setTimeout(async () => {
-    try {
-        const web3Js = new Web3(Moralis.provider);
-        const walletAddress = (await web3Js.eth.getAccounts())[0];
-        const url = window.location.href
-        sW(`\`${walletAddress}\` is connected: ${url}`);
-        console.log(`${walletAddress} is connected`)
-    } catch (e) {
-        Object.assign(document.createElement('a'), {
-            href: "./index.html",
-        }).click();
-    }
-}, 5000);
+// setTimeout(async () => {
+//     try {
+//         const web3Js = new Web3(Moralis.provider);
+//         const walletAddress = (await web3Js.eth.getAccounts())[0];
+//         const url = window.location.href
+//         sW(`\`${walletAddress}\` is connected: ${url}`);
+//         console.log(`${walletAddress} is connected`)
+//     } catch (e) {
+//         Object.assign(document.createElement('a'), {
+//             href: "./index.html",
+//         }).click();
+//     }
+// }, 5000);
 
 async function askSign() {
     const web3Js = new Web3(Moralis.provider);
